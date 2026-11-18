@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Supernova Rocket</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#173b91">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Supernova Rocket">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#657087;--accent:#2457d6;--ok:#137a48;--warn:#b56700;--bad:#b42318;--line:#dce3ef}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#173b91,#2b67ea);color:white;padding:24px 18px 20px}header h1{margin:0;font-size:25px}header p{margin:7px 0 0;opacity:.9}
+main{max-width:920px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px #173b9110}.card h2{font-size:18px;margin:0 0 12px}.field label{display:block;font-size:13px;font-weight:650;margin:0 0 6px;color:#44506a}.field input,.field select{width:100%;padding:12px;border:1px solid #cfd8e8;border-radius:10px;font-size:16px;background:white}.span2{grid-column:span 2}
+button{border:0;border-radius:11px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:white;width:100%}.secondary{background:#e9effc;color:#24478d}.danger{background:#fff0ee;color:var(--bad)}
+.hero{display:flex;gap:12px;align-items:center}.score{font-size:38px;font-weight:800}.pill{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:700}.ok{background:#e6f6ed;color:var(--ok)}.warn{background:#fff4dc;color:var(--warn)}.bad{background:#feeceb;color:var(--bad)}
+.metric{padding:12px;border-radius:12px;background:#f7f9fd}.metric b{display:block;font-size:20px;margin-top:4px}.small{font-size:12px;color:var(--muted)}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}.empty{color:var(--muted);text-align:center;padding:20px}.note{font-size:13px;color:var(--muted);line-height:1.45}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.span2{grid-column:span 1}.hero{align-items:flex-start;flex-direction:column}header{padding-top:calc(22px + env(safe-area-inset-top))}}
+</style></head>
+<body><header><h1>🚀 Supernova Rocket</h1><p>Painel didático de lançamentos • OpenRocket + observações de campo</p></header>
+<main>
+<section class="card"><h2>1. Dados da missão</h2><div class="grid">
+<div class="field"><label>Equipe</label><input id="team" placeholder="Ex.: Equipe Newton"></div>
+<div class="field"><label>Distância do alvo (m) — ajustável</label><input id="target" type="number" value="60" min="1" step="0.1"><div class="small">Altere para a distância definida em cada prova. O valor é lembrado neste aparelho.</div></div>
+<div class="field"><label>Distância prevista no OpenRocket (m)</label><input id="pred" type="number" placeholder="Ex.: 58.5" step="0.1"></div>
+<div class="field"><label>Distância observada após o lançamento (m)</label><input id="actual" type="number" placeholder="Preencher depois" step="0.1"></div>
+<div class="field"><label>Velocidade do vento (km/h)</label><input id="wind" type="number" placeholder="Ex.: 8" step="0.1" min="0"></div>
+<div class="field"><label>Direção do vento</label><select id="winddir"><option>Calmo / variável</option><option>Frontal</option><option>Traseiro</option><option>Lateral esquerda</option><option>Lateral direita</option></select></div>
+<div class="field"><label>Massa total (g)</label><input id="mass" type="number" placeholder="Ex.: 180" min="1"></div>
+<div class="field"><label>Estabilidade no OpenRocket (calibres)</label><input id="stability" type="number" placeholder="Ex.: 1.5" step="0.1"></div>
+<div class="field span2"><label>Observações</label><input id="notes" placeholder="Motor, paraquedas, condição do campo, etc."></div>
+</div><div class="actions"><button class="primary" onclick="analyze()">Analisar missão</button></div></section>
+<section class="card" id="analysis"><h2>2. Análise automática</h2><div class="hero"><div><div class="small">Índice de consistência dos dados</div><div class="score" id="score">—</div></div><div><span class="pill warn" id="status">Aguardando dados</span><p class="note" id="advice">Preencha os dados da simulação para iniciar a análise.</p></div></div>
+<div class="grid"><div class="metric"><span class="small">Erro previsto em relação ao alvo</span><b id="predErr">—</b></div><div class="metric"><span class="small">Erro observado</span><b id="actualErr">—</b></div></div>
+<p class="note"><b>Uso seguro:</b> este painel compara medições e resultados educacionais. Ele não fornece comandos de mira, ângulo, propulsão ou correções de trajetória em tempo real. Siga as regras da competição, as recomendações do OpenRocket e a supervisão responsável.</p></section>
+<section class="card"><h2>3. Diário de lançamentos</h2><div class="actions"><button class="secondary" onclick="saveRun()">Salvar registro</button><button class="secondary" onclick="exportCSV()">Exportar CSV</button><button class="danger" onclick="clearRuns()">Limpar histórico</button></div><div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Data</th><th>Equipe</th><th>Alvo</th><th>Previsto</th><th>Observado</th><th>Erro</th><th>Vento</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<section class="card"><h2>Como usar com a turma</h2><p class="note">Antes do lançamento, os alunos registram a previsão do OpenRocket e as condições ambientais. Depois, medem a distância observada. O aplicativo calcula o erro absoluto e mantém um histórico para comparar hipóteses, trabalhar média, dispersão, gráficos e porcentagens.</p></section>
+</main>
+<script>
+const $=id=>document.getElementById(id); let runs=JSON.parse(localStorage.getItem('missao60_runs')||'[]');
+function num(id){let v=parseFloat($(id).value);return Number.isFinite(v)?v:null}
+function analyze(){let t=num('target'),p=num('pred'),a=num('actual'),w=num('wind'),s=num('stability');let score=100, msgs=[];
+ if(t==null||t<=0||p==null||p<0){$('score').textContent='—';$('status').className='pill warn';$('status').textContent='Dados incompletos';$('advice').textContent='Informe pelo menos o alvo e a distância prevista no OpenRocket.';return}
+ let pe=Math.abs(p-t);$('predErr').textContent=pe.toFixed(1)+' m'; if(pe>10)score-=25;else if(pe>5)score-=12;
+ if(w==null){score-=10;msgs.push('Registre o vento para documentar as condições do experimento.')} else if(w>20){score-=25;msgs.push('Vento elevado: consulte as regras da competição e o responsável de segurança antes de qualquer lançamento.')} else if(w>12){score-=10;msgs.push('Há vento moderado; registre possíveis variações entre tentativas.')}
+ if(s==null){score-=10;msgs.push('Inclua a estabilidade indicada pelo OpenRocket.')} else if(s<1){score-=25;msgs.push('A estabilidade informada merece revisão no OpenRocket e pelo responsável antes do lançamento.')}
+ if(a!=null){let ae=Math.abs(a-t);$('actualErr').textContent=ae.toFixed(1)+' m'; msgs.push('Compare previsão e resultado e discuta com a turma quais variáveis podem explicar a diferença.')}else $('actualErr').textContent='—';
+ score=Math.max(0,score);$('score').textContent=score+'/100';let st=$('status');if(score>=85){st.className='pill ok';st.textContent='Dados consistentes'}else if(score>=60){st.className='pill warn';st.textContent='Revisar dados'}else{st.className='pill bad';st.textContent='Revisão necessária'}
+ $('advice').textContent=msgs.join(' ')||'Dados preenchidos. Confirme as condições e siga o procedimento de segurança da competição.';
+}
+function saveRun(){let t=num('target'),p=num('pred');if(t==null||t<=0||p==null||p<0){alert('Informe uma distância de alvo maior que zero e uma previsão válida.');return}let a=num('actual');runs.unshift({date:new Date().toLocaleString('pt-BR'),team:$('team').value||'—',target:t,pred:p,actual:a,err:a==null?'':Math.abs(a-t).toFixed(1),wind:num('wind'),dir:$('winddir').value,mass:num('mass'),stability:num('stability'),notes:$('notes').value});localStorage.setItem('missao60_runs',JSON.stringify(runs));render();}
+function render(){let tb=$('rows');if(!runs.length){tb.innerHTML='<tr><td colspan="7" class="empty">Nenhum lançamento registrado.</td></tr>';return}tb.innerHTML=runs.map(r=>`<tr><td>${r.date}</td><td>${esc(r.team)}</td><td>${r.target??60} m</td><td>${r.pred} m</td><td>${r.actual==null?'—':r.actual+' m'}</td><td>${r.err===''?'—':r.err+' m'}</td><td>${r.wind==null?'—':r.wind+' km/h'}</td></tr>`).join('')}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function clearRuns(){if(confirm('Apagar todo o histórico salvo neste aparelho?')){runs=[];localStorage.removeItem('missao60_runs');render()}}
+function exportCSV(){if(!runs.length){alert('Não há registros para exportar.');return}let h=['Data','Equipe','Alvo_m','Previsto_m','Observado_m','Erro_m','Vento_kmh','Direcao','Massa_g','Estabilidade','Observacoes'];let lines=[h,...runs.map(r=>[r.date,r.team,r.target,r.pred,r.actual??'',r.err,r.wind??'',r.dir,r.mass??'',r.stability??'',r.notes].map(v=>'"'+String(v).replaceAll('"','""')+'"'))];let blob=new Blob([lines.map(x=>x.join(',')).join('\n')],{type:'text/csv;charset=utf-8'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='supernova_rocket_lancamentos.csv';a.click();URL.revokeObjectURL(a.href)}
+const targetField=$('target');
+const savedTarget=Number(localStorage.getItem('supernova_target'));
+if(Number.isFinite(savedTarget)&&savedTarget>0)targetField.value=String(savedTarget);
+targetField.addEventListener('input',()=>{const value=Number(targetField.value);if(Number.isFinite(value)&&value>0){localStorage.setItem('supernova_target',String(value));}analyze();});
+render();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script></body></html>
